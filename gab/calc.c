@@ -1,210 +1,197 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+* To change this license header, choose License Headers in Project Properties.
+* To change this template file, choose Tools | Templates
+* and open the template in the editor.
+*/
 
-/* 
- * File:   main.c
- * Author: Gabriel
- *
- * Created on 4 octobre 2016, 22:16
- */
+/*
+* File:   main.c
+* Author: Gabriel
+*
+* Created on 4 octobre 2016, 22:16
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-struct num { int negatif; struct cell *chiffres; };
-struct cell { char chiffre; struct cell *suivant; int marked;};
 
-struct variable { char lettre; int valeur;}; 
+//struct variable { char lettre; int valeur; };
 /*utilisable doit etre entre 0 et 1 et est initialisee a 0. Elle devient 1
- * lorsque la variable est utilisable.*/
+* lorsque la variable est utilisable.*/
 
 /*
- * Procedure principale
- */
-//struct cell* cellTete = NULL;
-
-struct cell* selectNumber(struct cell*);
-struct cell* addition(struct cell*, struct cell*);
-
-int main(int argc, char** argv) 
-{
-    struct variable varArray[26]; //array where you set variables
-    struct cell* cellTete = NULL; //premiere cellule de la linked list
-    struct cell* cellActuelle = NULL; // cellule actuelle lors du parcours
-    char checkfirst = '0'; //remplacement de bool
-    char c; //variable du get char
-	
-    cellTete = malloc(sizeof(struct cell));
-    cellActuelle = malloc(sizeof(struct cell));
-    cellActuelle = cellTete;
-   
-    makeArray(varArray);
-    
-    inputEquation:
-    printf("> ");
-    fflush (stdout);
-	
-    do 
-    {
-        //get next char in the buffer
-        c = getchar();
-		
-        if(c != '\n')
-        {
-            if(checkfirst == '0')
-            {
-                //set cellTete
-                checkfirst = '1';
-                cellTete->chiffre = c;
-                cellTete->marked = 0;
-            }
-            else
-            {
-                struct cell* temp = malloc(sizeof(struct cell));
-		
-                temp->chiffre = c;
-                temp->marked = 0;
-                cellActuelle->suivant = temp;
-                cellActuelle = temp;				                
-            }
-        }
-    } while ( c != '\n' );
-	
-    //printString(cellTete);
-    //verifyArray(varArray);
-    calculer(cellTete, varArray);
-    printf("\n");
-    goto inputEquation;
-    return 0;
-}
-
-/* Debug purposes
-void printString(struct cell* firstCell){
-    do {
-        printf("%c", firstCell->chiffre);
-        firstCell = firstCell->suivant;
-    } while(firstCell != NULL);
-}*/
-
-void makeArray(struct variable varArray[]){
-    //initialise le array de a à z
-    int compteur = 0;
-    for (int i = 97; i<=122; i++){
-        struct variable var = {i, 0};
-        varArray[compteur] = var;
-        //printf("%c", varArray[compteur].lettre); debug purpose
-        compteur++;
-    }
-}
-
-/* Debug purposes 
-void verifyArray(struct variable varArray[]){
-    printf("%c", varArray[4].lettre);
-}
+* Procedure principale
 */
+struct stackElement{ char valeur; struct stackElement* next; };
+struct stack{ struct stackElement* top; };
 
-void calculer(struct cell* cellTete, struct variable varArray[]){
-    struct cell* cellTeteCopie;
-    char operateur;
-    
-    struct num* var1;
-    struct num* var2;
-    
-    var1 = malloc(sizeof(struct num));
-    var2 = malloc(sizeof(struct num));
-    cellTeteCopie = malloc(sizeof(struct cell));
-    
-    cellTeteCopie = cellTete;
-    
-    var1->chiffres = cellTeteCopie;
-    
-    printf("%c", cellTeteCopie->chiffre);
-    
-    cellTeteCopie = selectNumber(cellTeteCopie);
-    cellTeteCopie = cellTeteCopie->suivant;
- 
-    var2->chiffres = cellTeteCopie;
-    
-    printf("%c", cellTeteCopie->chiffre);
-    
-    cellTeteCopie = selectNumber(cellTeteCopie);
-    operateur = cellTeteCopie->suivant->chiffre;
-    
-    selectOperation(operateur, var1->chiffres, var2->chiffres);
+void push(struct stack* stk, char element){
+	//Ajoute un stackElement sur le top du stack stk
+	struct stackElement* current;
+	current = malloc(sizeof(struct stackElement));
+	current->valeur = element;
+
+	if (stk->top == NULL){
+		// S'éxecute lorsque la pile est vide
+		stk->top = current;
+		stk->top->next = NULL; //initialise le next à NULL
+	}
+	else{
+		// S'éxecute lorsque la pile n'est pas vide
+		current->next = stk->top;
+		stk->top = current;
+	}
 }
 
-struct cell* selectNumber(struct cell* currentCell){
-    while (currentCell->chiffre != ' '){
-        currentCell = currentCell->suivant;
-        printf("%c", currentCell->chiffre);
-    }
-    return currentCell;
+char pop(struct stack* stk){
+	//Retire l'élément au top de la pile et retourne sa valeur
+	if (stk->top == NULL){
+		// Attrape l'exception lorsque la pile est vide
+		printf("Erreur! Pile Vide.\n");
+	}
+	else{
+		// S'exécute lorsque la pile n'est pas vide
+		char c;
+		struct stackElement* current;
+		current = malloc(sizeof(struct stackElement));
+		current = stk->top;
+		c = current->valeur;
+		stk->top = stk->top->next;
+		free(current); // libère l'espace mémoire
+
+		return c;
+	}
 }
 
-void selectOperation(char operateur, struct cell* a, struct cell* b){
-    struct cell* temporaireCell1;
-    temporaireCell1 = malloc(sizeof(struct cell));
-    
-    switch(operateur){
-        case '+':
-            temporaireCell1 = addition(a, b);
-            printf("%d", temporaireCell1->chiffre);
-            break;
-        case '-':
-            printf("-");
-            break;
-        case '*':
-            printf("*");
-            break;
-        case '?':
-            printf("?");
-            break;
-        case '=':
-            printf("=");
-            break;
-        default:
-            printf("default");
-            break;
-    }
+struct stack* reverse(struct stack* stk1){
+	//Renverse les éléments de la pile
+	//Doit obligatoirement être appelé sous forme [stk = reverse(stk)] puisque la pile initiale est vidée.
+	if (stk1->top != NULL){
+		//Si la pile n'est pas vide
+		struct stack* stk2;
+		stk2 = malloc(sizeof(struct stack));
+		stk2->top = NULL;
+		while (stk1->top != NULL){
+			push(stk2, pop(stk1));
+		}
+		return stk2;
+	}
+	else{
+		//Si la pile est vide
+		printf("Erreur! Pile Vide non renversible puisque vide.\n");
+	}
 }
 
-struct cell* addition(struct cell* a, struct cell* b){
-    // Additionne les decimales une par une pour avoir une precision infinie.
-    struct cell* add;
-    
-    struct cell* aa; //initialisation du pointeur buggé de la ligne 200
-    
-    int valeurAjoutee = 0;
-    while (a->suivant->chiffre != ' '){
-        a = a->suivant;
-    }
-    while (b->suivant->chiffre != ' '){
-        b = b->suivant;
-    }
-    
-    int z = (int)(a->chiffre-'0') + (int)(b->chiffre-'0');
-    a->marked = 1;
-    b->marked = 1;
-    if(z >= 10){
-        valeurAjoutee = 1;
-        z = z-10;
-    }
-    
-    /* Cette ligne (200) cause un problème 0 [main] tp1 2100 
-     * cygwin_exception::open_stackdumpfile: dumping stack trace 
-     * to tp1.exe.stackdump*/
-    aa->chiffre = z;
+void addition(struct stack* stk, struct stack* stk1, struct stack* stk2){
+	//Méthode permettant l'addition de deux nombres
 
-    add->chiffre = z;
-    add->suivant = NULL;
-    
-    //while (a->suivant->marked != 1)
-    
-    //printf("%d", add->chiffre);
-    
-    return add;
+	//Initialisation des variables
+	int a; // Nombre 1
+	int b; // Nombre 2
+	int keepOne; // Combien doit-on ajouter au prochain calcul
+	
+	//Initialisation du nombre d'ajout au prochain calcul à 0
+	keepOne = 0;
+
+	while (stk1->top != NULL && stk2->top != NULL){
+		/*Additionne les unités avec les unités, dizaines avec les dizaines etc afin
+			d'obtenir une précision infinie.*/
+		if (stk1->top == NULL) {
+			/*Transforme a en 0 pour le calcul puisque le nombre 1
+				ne possède pas de chiffre dans cette colonne.*/
+			a = 0;
+		}
+		else{
+			//Donne à a la valeur du top de la pile du nombre1
+			a = pop(stk1) - '0';
+			printf("a = %d\n", a);
+		}
+		if (stk2->top == NULL){
+			/*Transforme b en 0 pour le calcul puisque le nombre 2
+				ne possède pas de chiffre dans cette colonne.*/
+			b = 0;
+		}
+		else{
+			//Donne à b la valeur du top de la pile du nombre2
+			b = pop(stk2) - '0';
+			printf("b = %d\n", b);
+		}
+		if (keepOne == 1){
+			//Incrémente a si le calcul précédent était supérieur ou égal à 10
+			a++;
+			keepOne = 0;
+		}
+		if (a + b >= 10){
+			//Garde 1 pour le prochain calcul si a+b est >= à 10 et donne les unités du résultat à stk3
+			keepOne = 1;
+			push(stk, (a + b) - 10);
+		}
+		else{
+			//Donne la valeur de a+b à stk3
+			push(stk, a + b);
+		}
+	}
+}
+
+int main(int argc, char** argv)
+{
+	//Initialisation du stack
+	struct stack *stk;
+	stk = malloc(sizeof(struct stack));
+	stk->top = NULL; //Initialise le top à null. Important de garder.
+
+	//Affichage initial sur la console
+	printf("> ");
+	fflush(stdout);
+	
+	//Lecture du input de l'utilisateur et remplissage du stack
+	char c = getchar();
+	while (c != '\n'){
+		push(stk, c);
+		c = getchar();
+	}
+	//Reversion du stack
+	stk = reverse(stk);
+
+	//Initialisation des stack des nombres à évaluer
+	struct stack *stk1;
+	stk1 = malloc(sizeof(struct stack));
+	stk1->top = NULL;
+	struct stack *stk2;
+	stk2 = malloc(sizeof(struct stack));
+	stk2->top = NULL;
+
+	//Rempli la pile stk1 avec le premier nombre
+	while (stk->top->valeur != ' '){
+		/*@TODO: Include exceptions si y'a pas de ' ' avant le EOF et
+			vérifier que seulement des chiffres ou des variables sont acceptés. */
+		push(stk1, pop(stk));
+	}
+	pop(stk); //Retire le ' ' de la pile
+	//Rempli la pile stk2 avec le deuxième nombre
+	while (stk->top->valeur != ' '){
+		/*@TODO: Include exceptions si y'a pas de ' ' avant le EOF et
+		vérifier que seulement des chiffres ou des variables sont acceptés. */
+		if (stk->top->valeur == '='){
+			printf("$$$ money shot $$$");
+		}
+		push(stk2, pop(stk));
+	}
+	pop(stk); // Retire le ' ' de la pile
+
+	//Prend le symbole d'opération
+	char operateur = pop(stk);
+
+	switch (operateur){
+		case('+') :
+			printf("dingleberries");
+			addition(stk, stk1, stk2);
+			break;
+		default:
+			printf("bumbleberries");
+			break;
+	}
+
+	getchar(); //Uniquement pour afficher la console
 }
